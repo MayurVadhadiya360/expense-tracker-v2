@@ -1,0 +1,12 @@
+backend/backend/.env
+backend/db.sqlite3
+
+expense-tracker-auth/build/
+expense-tracker-auth/node_modules/
+expense-tracker-auth/README.md
+expense-tracker-auth/.gitignore
+
+expense-tracker-mainapp/build/
+expense-tracker-mainapp/node_modules/
+expense-tracker-mainapp/README.md
+expense-tracker-mainapp/.gitignore
