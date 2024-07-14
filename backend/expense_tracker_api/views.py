@@ -18,10 +18,16 @@ from .mongo_pipelines import category_type_amount_pipeline, date_type_amount_pip
 
 
 mongo_client = pymongo.MongoClient(settings.MONGO_CONNECTION_URL)
-mongo_db = mongo_client['ExpenseTracker']
+mongo_db = mongo_client[settings.MONGO_DATABASE]
 
+MONGO_COLLECTION_AUTH = settings.MONGO_COLLECTION_AUTH
+MONGO_COLLECTION_CATEGORY = settings.MONGO_COLLECTION_CATEGORY
+MONGO_COLLECTION_EXPENSE = settings.MONGO_COLLECTION_EXPENSE
+MONGO_COLLECTION_OTP = settings.MONGO_COLLECTION_OTP
 # Create your views here.
 
+def custom_404(request, exception):
+    return render(request, 'error404.html', status=404)
 
 # Authentication
 @method_decorator(csrf_exempt, name='dispatch')
@@ -38,7 +44,7 @@ class login(View):
             if not email or not password:
                 return JsonResponse({'status': False, 'msg': "Email and password are required!"})
 
-            mongo_col = mongo_db['auth']
+            mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
             result = mongo_col.find_one({'_id': email})
 
             if result is None:
@@ -75,7 +81,7 @@ class signup(View):
             hashed_password = make_password(password)
             print(hashed_password)
 
-            mongo_col = mongo_db['auth']
+            mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
             new_user = {
                 '_id': email,
                 'name': name,
@@ -86,7 +92,7 @@ class signup(View):
             if insert_status.inserted_id:
                 request.session['email'] = email
                 print(request.session.items())
-                mongo_cat_col = mongo_db['category']
+                mongo_cat_col = mongo_db[MONGO_COLLECTION_CATEGORY]
                 insert_col_status = mongo_cat_col.insert_one({'_id': email, 'category': ['Recharge/Bill', 'Income', 'Food/Drinks', 'Transportation']})
                 return JsonResponse({'status': True, 'msg': 'Account created!'})
             else:
@@ -104,7 +110,7 @@ def get_user(request):
         email = request.session.get('email', None)
         if not email: return redirect('login')
 
-        mongo_col = mongo_db['auth']
+        mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
         user_data = mongo_col.find_one({'_id': email})
         if user_data:
             return JsonResponse({'status': True, 'user_data': user_data})
@@ -122,21 +128,21 @@ def fp_get_email(request):
             request_body = json.loads(request.body)
             fp_email = request_body['fp_email']
 
-            mongo_col = mongo_db['auth']
+            mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
             result = mongo_col.find_one({'_id': fp_email})
 
             if result:
                 otp = str(random.randint(100000, 999999))
 
-                mongo_col_ttl_otp = mongo_db['ttl_otp']
+                mongo_col_otp = mongo_db[MONGO_COLLECTION_OTP]
                 try: 
-                    mongo_col_ttl_otp.insert_one({
+                    mongo_col_otp.insert_one({
                         'email': fp_email,
                         'otp': otp,
                         'createdAt': datetime.now(timezone.utc)
                     })
                 except pymongo.errors.DuplicateKeyError:
-                    mongo_col_ttl_otp.update_one(
+                    mongo_col_otp.update_one(
                         {'email': fp_email},
                         {
                             "$set":{
@@ -150,7 +156,7 @@ def fp_get_email(request):
                 send_mail(
                     subject="Password Reset Request",
                     message=strip_tags(html_message),
-                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    from_email=None,#settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[fp_email],
                     html_message=html_message,
                 )
@@ -159,6 +165,7 @@ def fp_get_email(request):
                 return JsonResponse({'status': False, 'msg': "Account doesn't exist!"})
         except Exception as e:
             print(traceback.format_exc())
+            return JsonResponse({'status': False, 'msg': "Server error!"})
     return JsonResponse({'status': False, 'msg': "Invalid request!"})
 
 @csrf_exempt
@@ -172,8 +179,8 @@ def fp_otp_submit(request):
             if not fp_email or not fp_otp_check:
                 return JsonResponse({'status': False, 'msg': "Email and OTP are required."})
             
-            mongo_col_ttl_otp = mongo_db['ttl_otp']
-            otp_data = mongo_col_ttl_otp.find_one({'email': fp_email})
+            mongo_col_otp = mongo_db[MONGO_COLLECTION_OTP]
+            otp_data = mongo_col_otp.find_one({'email': fp_email})
             if otp_data:
                 fp_otp  = otp_data['otp']
                 
@@ -186,6 +193,7 @@ def fp_otp_submit(request):
 
         except Exception as e:
             print(traceback.format_exc())
+            return JsonResponse({'status': False, 'msg': "Server error!"})
     return JsonResponse({'status': False, 'msg': "Invalid request!"})
 
 @csrf_exempt
@@ -201,10 +209,10 @@ def fp_password_submit(request):
             
             hashed_fp_password = make_password(fp_password)
             
-            mongo_col_ttl_otp = mongo_db['ttl_otp']
-            otp_data = mongo_col_ttl_otp.find_one({'email': fp_email})
+            mongo_col_otp = mongo_db[MONGO_COLLECTION_OTP]
+            otp_data = mongo_col_otp.find_one({'email': fp_email})
             if otp_data:
-                mongo_col = mongo_db['auth']
+                mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
                 auth_data = mongo_col.update_one(
                     {
                         '_id': fp_email
@@ -215,6 +223,7 @@ def fp_password_submit(request):
                 )
 
                 if auth_data.modified_count:
+                    mongo_col_otp.delete_one({'email': fp_email})
                     return JsonResponse({'status': True, 'msg': 'Password updated successfully!'})
                 else:
                     return JsonResponse({'status': False, 'msg': "Failed to update password!"})
@@ -223,6 +232,7 @@ def fp_password_submit(request):
 
         except Exception as e:
             print(traceback.format_exc())
+            return JsonResponse({'status': False, 'msg': "Server error!"})
     return JsonResponse({'status': False, 'msg': "Invalid request!"})
 
 
@@ -249,7 +259,7 @@ def get_expense(request):
         email = request.session.get('email', None)
         if not email: return redirect('login')
 
-        mongo_col = mongo_db['transaction']
+        mongo_col = mongo_db[MONGO_COLLECTION_EXPENSE]
         result = mongo_col.find({'email': email}).sort('date', pymongo.DESCENDING)
         expenses = [{**trans, '_id': str(trans['_id'])} for trans in result]
 
@@ -263,7 +273,7 @@ def get_category(request):
         email = request.session.get('email', None)
         if not email: return redirect('login')
 
-        mongo_col = mongo_db['category']
+        mongo_col = mongo_db[MONGO_COLLECTION_CATEGORY]
         result = mongo_col.find_one({'_id': email})
         if result:
             return JsonResponse({'status': True, 'category': result['category']})
@@ -297,7 +307,7 @@ def add_expense(request):
                 'type': expenseType,
             }
             try:
-                mongo_col = mongo_db['transaction']
+                mongo_col = mongo_db[MONGO_COLLECTION_EXPENSE]
                 result = mongo_col.insert_one(data)
                 if result.inserted_id:
                     return JsonResponse({'status': True, 'msg': "Successfully added expense!"})
@@ -321,7 +331,7 @@ def add_category(request):
 
         if category:
             try:
-                mongo_col = mongo_db['category']
+                mongo_col = mongo_db[MONGO_COLLECTION_CATEGORY]
                 result = mongo_col.update_one({'_id': email}, {'$addToSet': {'category': category}})
                 if result.modified_count:
                     return JsonResponse({'status': True, 'msg': f"New category '{category}' added!"})
@@ -365,7 +375,7 @@ def update_expense(request):
                 'email': email,
             }
 
-            mongo_col = mongo_db['transaction']
+            mongo_col = mongo_db[MONGO_COLLECTION_EXPENSE]
             result = mongo_col.update_one(filter_doc, {"$set": update_doc})
             print(result.raw_result)
             if result.modified_count:
@@ -390,7 +400,7 @@ def delete_expense(request):
             email = request.session.get('email', None)
             if not email: return redirect('login')
 
-            mongo_col = mongo_db['transaction']
+            mongo_col = mongo_db[MONGO_COLLECTION_EXPENSE]
             result = mongo_col.delete_one({'_id': ObjectId(expense_id), "email": email})
             if result.deleted_count:
                 return JsonResponse({'status': True, 'msg': 'Expense deleted successfully!'})
@@ -412,7 +422,7 @@ def delete_category(request):
             email = request.session.get('email', None)
             if not email: return redirect('login')
 
-            mongo_col = mongo_db['category']
+            mongo_col = mongo_db[MONGO_COLLECTION_CATEGORY]
             result = mongo_col.update_one(
                 {'_id': email}, 
                 {'$pull': {'category': category}}
@@ -444,7 +454,7 @@ def get_insights_data(request):
             email = request.session.get('email', None)
             if not email: return redirect('login')
 
-            mongo_col = mongo_db['transaction']
+            mongo_col = mongo_db[MONGO_COLLECTION_EXPENSE]
 
             initMatchStage = {
                 '$match': {

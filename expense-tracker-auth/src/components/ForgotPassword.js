@@ -1,20 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Toast } from 'primereact/toast';
 import { Button } from 'primereact/button';
 import { Stepper } from 'primereact/stepper';
 import { InputOtp } from 'primereact/inputotp';
 import { Password } from 'primereact/password';
 import { InputText } from 'primereact/inputtext';
 import { StepperPanel } from 'primereact/stepperpanel';
+import { getEmailRegex, getPasswordRegex } from './utils/AuthHelpers';
+
 
 function ForgotPassword(props) {
     const API_URL = props.API_URL;
+    const setLoadingBarProgress = props.setLoadingBarProgress;
+    const setToastMsg = props.setToastMsg;
+
     const navigate = useNavigate();
 
     const stepperRef = useRef(null);
-    const toast = useRef(null);
-    const [toastMsg, setToastMsg] = useState(null);
 
     const [email, setEmail] = useState('');
     const [otpValue, setOTPValue] = useState('');
@@ -32,15 +34,8 @@ function ForgotPassword(props) {
     const [loadingPassword2Btn, setLoadingPassword2Btn] = useState(false);
 
     useEffect(() => {
-        if (toastMsg) {
-            toast.current.show(toastMsg);
-            setToastMsg(null);
-        }
-    }, [toastMsg]);
-
-    useEffect(() => {
-        const emailRegex = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
-        setValidEmail(emailRegex.test(email));
+        const emailRegex = getEmailRegex();
+        setValidEmail(email.length !== 0 && emailRegex.test(email));
     }, [email]);
 
     useEffect(() => {
@@ -48,19 +43,21 @@ function ForgotPassword(props) {
     }, [otpValue]);
 
     useEffect(() => {
-        const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,32}$/;
+        const passwordRegex = getPasswordRegex();
         setValidPassword1(passwordRegex.test(password1));
     }, [password1]);
 
     useEffect(() => {
-        const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])(?!.*\s).{8,32}$/;
+        const passwordRegex = getPasswordRegex();
         setValidPassword2(passwordRegex.test(password2) && password1 === password2);
     }, [password2, password1]);
 
 
     const emailSubmit = () => {
         if (!validEmail) return false;
+
         setLoadingEmailBtn(true);
+        setLoadingBarProgress(30);
         // forgot password get email
         fetch(`${API_URL}/fp-get-email/`, {
             method: 'POST',
@@ -79,11 +76,13 @@ function ForgotPassword(props) {
                     }
                     console.log(result);
                     setLoadingEmailBtn(false);
+                    setLoadingBarProgress(100);
                 },
                 (error) => {
                     console.error(error);
                     setToastMsg({ severity: 'error', summary: 'Error', detail: 'Functional error!', life: 3000 });
                     setLoadingEmailBtn(false);
+                    setLoadingBarProgress(100);
                 }
             );
     }
@@ -91,7 +90,9 @@ function ForgotPassword(props) {
     const otpSubmit = () => {
         if (!validOTP) return false;
 
+        setLoadingBarProgress(30);
         setLoadingOTPValueBtn(true);
+
         fetch(`${API_URL}/fp-otp-submit/`, {
             method: 'POST',
             headers: { 'accept': 'application.json', 'content-type': 'application/json', },
@@ -109,11 +110,13 @@ function ForgotPassword(props) {
                     }
                     console.log(result);
                     setLoadingOTPValueBtn(false);
+                    setLoadingBarProgress(100);
                 },
                 (error) => {
                     console.error(error);
                     setToastMsg({ severity: 'error', summary: 'Error', detail: 'Functional error!', life: 3000 });
                     setLoadingOTPValueBtn(false);
+                    setLoadingBarProgress(100);
                 }
             );
     }
@@ -126,7 +129,9 @@ function ForgotPassword(props) {
 
     const password2Submit = () => {
         if (!validPassword2) return false;
+
         setLoadingPassword2Btn(true);
+        setLoadingBarProgress(30);
 
         fetch(`${API_URL}/fp-password-submit/`, {
             method: 'POST',
@@ -138,10 +143,15 @@ function ForgotPassword(props) {
                 (result) => {
                     if (result['status']) {
                         setToastMsg({ severity: 'success', summary: 'Success', detail: result.msg, life: 5000 });
-                        navigate('/login');
+                        setLoadingBarProgress(80);
+                        setTimeout(() => {
+                            navigate('/login');
+                            setLoadingBarProgress(100);
+                        }, 1000);
                     }
                     else {
                         setToastMsg({ severity: 'error', summary: 'Warning', detail: result.msg, life: 3000 });
+                        setLoadingBarProgress(100);
                     }
                     console.log(result);
                     setLoadingPassword2Btn(false);
@@ -150,13 +160,13 @@ function ForgotPassword(props) {
                     console.error(error);
                     setToastMsg({ severity: 'error', summary: 'Error', detail: 'Functional error!', life: 3000 });
                     setLoadingPassword2Btn(false);
+                    setLoadingBarProgress(100);
                 }
             );
     }
 
     return (
         <>
-            <Toast ref={toast} />
             <div className='d-flex justify-content-center'>
                 <h1 className='title'>Change Password</h1>
             </div>
@@ -258,6 +268,7 @@ function ForgotPassword(props) {
                                 <Password
                                     value={password1}
                                     onChange={(e) => setPassword1(e.target.value)}
+                                    strongRegex={getPasswordRegex()}
                                     placeholder='Enter New Password'
                                     toggleMask
                                     variant="filled"
@@ -293,6 +304,7 @@ function ForgotPassword(props) {
                                 <Password
                                     value={password2}
                                     onChange={(e) => setPassword2(e.target.value)}
+                                    strongRegex={getPasswordRegex()}
                                     placeholder='Confirm New Password'
                                     toggleMask
                                     variant="filled"

@@ -1,73 +1,98 @@
-import React, { useState } from 'react'
-import '../css/login.css';
-import { Link } from "react-router-dom";
-import { validate_email, validate_password } from './utils/AuthHelpers';
+import React, { useState, useEffect, useRef } from 'react'
 import Swal from 'sweetalert2';
-
+import { Link } from "react-router-dom";
+import { Divider } from 'primereact/divider';
+import { Password } from 'primereact/password';
+import { InputText } from 'primereact/inputtext';
+import { togglePasswordState, getEmailRegex, getPasswordRegex } from './utils/AuthHelpers';
 
 function Login(props) {
-    const [passwordViewType, setPasswordViewType] = useState("password");
     const API_URL = props.API_URL;
+    const setToastMsg = props.setToastMsg;
+    const setLoadingBarProgress = props.setLoadingBarProgress;
 
-    const onPasswordToggle = () => {
-        let inputPassword = document.getElementById('password-login');
-        let togglePassBtn = document.getElementById('toggle-password-type');
-        passwordViewType === "password" ? setPasswordViewType("text") : setPasswordViewType("password");
-        inputPassword.setAttribute('type', passwordViewType);
+    const passwordRef = useRef(null);
 
-        if (passwordViewType === "password") {
-            togglePassBtn.classList.remove("bi-eye-slash");
-            togglePassBtn.classList.add("bi-eye");
-        }
-        else if (passwordViewType === "text") {
-            togglePassBtn.classList.add("bi-eye-slash");
-            togglePassBtn.classList.remove("bi-eye");
-        }
-    }
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
 
-    const validate_email_login = () => {
-        var emailErrorMsgTag = document.getElementById("email-error-login");
-        var email = document.getElementById("email-login").value;
-        return validate_email(email, emailErrorMsgTag);
-    }
+    const [validEmail, setValidEmail] = useState(false);
+    const [validPassword, setValidPassword] = useState(false);
 
-    const validate_password_login = () => {
-        var passwordErrorMsgTag = document.getElementById("password-error-login");
-        var password = document.getElementById("password-login").value;
-        return validate_password(password, passwordErrorMsgTag);
-    }
+    useEffect(() => {
+        const emailRegex = getEmailRegex();
+        setValidEmail(email.length !== 0 && emailRegex.test(email));
+    }, [email]);
+
+    useEffect(() => {
+        const passwordRegex = getPasswordRegex();
+        setValidPassword(passwordRegex.test(password));
+    }, [password]);
+
 
     const login_user = () => {
-        if (validate_email_login() && validate_password_login()) {
-            console.log("Login Call here");
-            let login_data = {
-                email: document.getElementById("email-login").value,
-                password: document.getElementById("password-login").value
-            }
-            fetch(`${API_URL}/login/`, {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify(login_data)
-            }).then(response => response.json()).then(data => {
-                console.log(data);
-                if (data.status) {
-                    window.location.href = `${API_URL}/home/`;
-                }
-                else {
-                    console.log(data.msg);
-                    Swal.fire(
-                        {
-                            title: 'Warning!',
-                            text: data.msg,
-                            icon: 'warning',
-                            confirmButtonText: 'Okay'
-                        }
-                    );
-                }
-            })
+        if (!validEmail) {
+            setToastMsg({ severity: 'error', summary: 'Warning', detail: 'Invalid email!', life: 2000 });
+            return false;
         }
-
+        if (!validPassword) {
+            setToastMsg({ severity: 'error', summary: 'Warning', detail: 'Invalid password!', life: 2000 });
+            return false;
+        }
+        setLoadingBarProgress(30);
+        console.log("Login Call here");
+        fetch(`${API_URL}/login/`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+                email: email,
+                password: password,
+            }),
+        }).then(res => res.json())
+            .then(
+                (result) => {
+                    if (result['status']) {
+                        setToastMsg({ severity: 'success', summary: 'Success', detail: result.msg, life: 3000 });
+                        setLoadingBarProgress(90);
+                        setTimeout(() => {
+                            window.location.href = `${API_URL}/home/`;
+                        }, 1500);
+                    }
+                    else {
+                        console.log(result.msg);
+                        Swal.fire(
+                            {
+                                title: 'Warning!',
+                                text: result.msg,
+                                icon: 'warning',
+                                confirmButtonText: 'Okay'
+                            }
+                        );
+                        setLoadingBarProgress(100);
+                    }
+                },
+                (error) => {
+                    console.error(error);
+                    setToastMsg({ severity: 'error', summary: 'Error', detail: 'Functional error!', life: 3000 });
+                    setLoadingBarProgress(100);
+                }
+            );
     }
+
+
+    const passwordFooter = (
+        <>
+            <Divider />
+            <p className="mt-2">Suggestions</p>
+            <ul className="pl-2 ml-2 mt-0 line-height-3">
+                <li>At least one lowercase</li>
+                <li>At least one uppercase</li>
+                <li>At least one numeric</li>
+                <li>At least one special character</li>
+                <li>Minimum 8 characters, Maximum 32 characters</li>
+            </ul>
+        </>
+    );
 
     return (
         <>
@@ -79,33 +104,47 @@ function Login(props) {
                                 <div className="card-body p-md-5">
                                     <div className="row justify-content-center">
                                         <div className="col-md-9 col-lg-6 col-xl-5">
-                                            <img src="/static/img/draw2.webp" className="img-fluid" alt="Sample" />
+                                            <img src="https://expense-tracker-cdn.s3.ap-south-1.amazonaws.com/images/draw2.webp" className="img-fluid" alt="Sample" />
                                         </div>
                                         <div className="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
-                                            <form id="loginForm" method="get">
+                                            <form >
                                                 <div className="d-flex flex-row align-items-center justify-content-center justify-content-start">
-                                                    <p className="lead h1 fw-bold mb-0 me-3" id="signin">Sign in</p>
+                                                    <p className="text-center h2 fw-medium mb-3 mx-1 mx-md-4 mt-4">Login</p>
                                                     <br /><br /><br /><br />
                                                 </div>
 
                                                 {/* <!-- Email input --> */}
-                                                <div className="form-outline mb-2">
-                                                    <label className="form-label" htmlFor="email-login">Email</label>
-                                                    <input type="email" id="email-login" className="form-control form-control-lg"
-                                                        placeholder="Enter email" onKeyUp={validate_email_login} />
-                                                    <span className='m-0 p-0' id="email-error-login"></span>
+                                                <div className="p-inputgroup flex-1 my-3">
+                                                    <span className="p-inputgroup-addon">
+                                                        <i className="pi pi-envelope"></i>
+                                                    </span>
+                                                    <InputText
+                                                        type='email'
+                                                        value={email}
+                                                        onChange={(e) => setEmail(e.target.value)}
+                                                        placeholder='Email'
+                                                    />
                                                 </div>
+                                                
 
                                                 {/* <!-- Password input --> */}
-                                                <div className="form-outline mb-2">
-                                                    <label className="form-label" htmlFor="password-login">Password</label>
-                                                    <div className="input-group">
-                                                        <input type="password" id="password-login" className="form-control form-control-lg"
-                                                            placeholder="Enter password" onKeyUp={validate_password_login} />
-                                                        <i className="bi bi-eye input-group-text password-eye" id="toggle-password-type" onClick={onPasswordToggle}></i>
-                                                    </div>
-                                                    <span id="password-error-login"></span>
+                                                <div className="p-inputgroup flex-1 mt-3">
+                                                    <span className="p-inputgroup-addon">
+                                                        <i className="pi pi-lock"></i>
+                                                    </span>
+                                                    <Password
+                                                        value={password}
+                                                        onChange={(e) => setPassword(e.target.value)}
+                                                        placeholder='Password'
+                                                        footer={passwordFooter}
+                                                        strongRegex={getPasswordRegex()}
+                                                        ref={passwordRef}
+                                                    />
+                                                    <span className="p-inputgroup-addon">
+                                                        <i className="pi pi-eye" onClick={(e) => togglePasswordState(e.target, passwordRef)}></i>
+                                                    </span>
                                                 </div>
+                                                
 
                                                 <div className="d-flex justify-content-between align-items-center">
                                                     {/* <!-- Checkbox --> */}
@@ -116,14 +155,12 @@ function Login(props) {
 
                                                 <div className="text-center text-start mt-3 pt-2 justify-content-center justify-content-start">
                                                     <button type="button" className="btn btn-primary btn-lg py-1" id="login_btn"
-                                                        // style={{ paddingLeft: "2.5rem", paddingRight: "2.5rem" }}
                                                         onClick={login_user}>Login</button>
                                                     <span id="submit-error-login"></span>
                                                     <p className="small fw-bold mt-1 mb-0">Don't have an account?
-                                                        <Link id="register_btn" className="link-danger m-1 p-0 auth-link" to="/signup">Register</Link>
+                                                        <Link className="link-danger m-1 p-0" to="/signup">Sign up</Link>
                                                     </p>
                                                 </div>
-
                                             </form>
                                         </div>
                                     </div>

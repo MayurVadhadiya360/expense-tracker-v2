@@ -49,6 +49,10 @@
   }
 }
 
+.forgot-password{
+  text-decoration: none;
+}
+
 .title {
   font-size: 3em;
   font-weight: bold;

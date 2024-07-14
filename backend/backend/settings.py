@@ -87,17 +87,6 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
-    # 'default': {
-    #     'ENGINE': 'djongo',
-    #     'NAME': 'ExpenseTracker',
-    #     'ENFORCE_SCHEMA': False,
-    #     'CLIENT': {
-    #         'host': 'mongodb://localhost:27017/',
-    #         # 'username': "",
-    #         # 'password': "",
-    #         # 'authMechanism': "",
-    #     }
-    # }
 }
 
 
@@ -168,29 +157,21 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = env('EMAIL_HOST_USER') #sender's email-id
-EMAIL_HOST_PASSWORD =env('EMAIL_HOST_PASSWORD') #password associated with above email-id
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD') #password associated with above email-id
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
 
-# Allow All Origins (for development only)
-# CORS_ALLOW_ALL_ORIGINS = True
 
 # Restrict the access to specific origins
 # CORS_ALLOWED_ORIGINS = [
 #     "http://localhost:3000",
 #     "http://127.0.0.1:3000",
 #     "http://localhost:3001",
-#     "http://192.168.118.65:3000",
-#     "http://192.168.118.65:3001",
-#     # "http://192.168.118.65:8001/",
 # ]
-# CORS_ALLOW_CREDENTIALS = True
 
-# CSRF_TRUSTED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://127.0.0.1:3000",
-#     "http://localhost:3001",
-#     "http://192.168.118.65:3000",
-#     "http://192.168.118.65:3001",
-# ]
 
 MONGO_CONNECTION_URL = env('MONGO_CONNECTION_URL')#'mongodb://localhost:27017/'
+MONGO_DATABASE = 'ExpenseTracker'
+MONGO_COLLECTION_OTP = 'ttl_otp'
+MONGO_COLLECTION_AUTH = 'auth'
+MONGO_COLLECTION_EXPENSE = 'transaction'
+MONGO_COLLECTION_CATEGORY = 'category'

@@ -1,3 +1,4 @@
+from django.conf.urls import handler404
 from django.urls import path
 from .views import *
 
@@ -28,3 +29,5 @@ urlpatterns = [
     # Logout
     path('logout/',             logout,             name='logout'),
 ]
+
+handler404 = 'expense_tracker_api.views.custom_404'

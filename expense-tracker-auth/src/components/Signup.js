@@ -1,128 +1,121 @@
-import React, { useState } from 'react'
-import { Link } from "react-router-dom";
-import { validate_email, validate_password } from './utils/AuthHelpers';
-import '../css/login.css';
+import React, { useState, useEffect, useRef } from 'react'
 import Swal from 'sweetalert2';
-
+import { Link } from "react-router-dom";
+import { Divider } from 'primereact/divider';
+import { Password } from 'primereact/password';
+import { InputText } from 'primereact/inputtext';
+import { togglePasswordState, getEmailRegex, getPasswordRegex } from './utils/AuthHelpers';
 
 function Signup(props) {
-    const [password1ViewType, setPassword1ViewType] = useState("password");
-    const [password2ViewType, setPassword2ViewType] = useState("password");
     const API_URL = props.API_URL;
+    const setToastMsg = props.setToastMsg;
+    const setLoadingBarProgress = props.setLoadingBarProgress;
 
-    const onPassword1Toggle = () => {
-        let inputPassword = document.getElementById('password1-signup');
-        let togglePassBtn = document.getElementById('toggle-password1-type');
+    const password1Ref = useRef(null);
+    const password2Ref = useRef(null);
 
-        password1ViewType === "password" ? setPassword1ViewType("text") : setPassword1ViewType("password");
-        inputPassword.setAttribute('type', password1ViewType);
+    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
+    const [password1, setPassword1] = useState('');
+    const [password2, setPassword2] = useState('');
 
-        if (password1ViewType === "password") {
-            togglePassBtn.classList.remove("bi-eye-slash");
-            togglePassBtn.classList.add("bi-eye");
-        }
-        else if (password1ViewType === "text") {
-            togglePassBtn.classList.add("bi-eye-slash");
-            togglePassBtn.classList.remove("bi-eye");
-        }
-    }
+    const [validEmail, setValidEmail] = useState(false);
+    const [validUsername, setValidUsername] = useState(false);
+    const [validPassword1, setValidPassword1] = useState(false);
+    const [validPassword2, setValidPassword2] = useState(false);
 
-    const onPassword2Toggle = () => {
-        let inputPassword = document.getElementById('password2-signup');
-        let togglePassBtn = document.getElementById('toggle-password2-type');
+    useEffect(() => {
+        setValidUsername((username !== '' && username !== null))
+    }, [username]);
 
-        password2ViewType === "password" ? setPassword2ViewType("text") : setPassword2ViewType("password");
-        inputPassword.setAttribute('type', password2ViewType);
+    useEffect(() => {
+        const emailRegex = getEmailRegex();
+        setValidEmail(email.length !== 0 && emailRegex.test(email));
+    }, [email]);
 
-        if (password2ViewType === "password") {
-            togglePassBtn.classList.remove("bi-eye-slash");
-            togglePassBtn.classList.add("bi-eye");
-        }
-        else if (password2ViewType === "text") {
-            togglePassBtn.classList.add("bi-eye-slash");
-            togglePassBtn.classList.remove("bi-eye");
-        }
-    }
+    useEffect(() => {
+        const passwordRegex = getPasswordRegex();
+        setValidPassword1(passwordRegex.test(password1));
+    }, [password1]);
 
-    const validate_name_signup = () => {
-        var nameErrorMsgTag = document.getElementById("name-error-signup");
-        var name = document.getElementById("name-signup").value;
-        if (name.length === 0) {
-            nameErrorMsgTag.style.color = "red";
-            nameErrorMsgTag.innerHTML = "Name Required";
-            return false;
-        }
-        else {
-            nameErrorMsgTag.innerHTML = ""; //"Validation Successfull";
-            return true;
-        }
-    }
+    useEffect(() => {
+        const passwordRegex = getPasswordRegex();
+        setValidPassword2(passwordRegex.test(password2) && password1 === password2);
+    }, [password2, password1]);
 
-    const validate_email_signup = () => {
-        var emailErrorMsgTag = document.getElementById("email-error-signup");
-        var email = document.getElementById("email-signup").value;
-        return validate_email(email, emailErrorMsgTag);
-    }
-
-    const validate_password1_signup = () => {
-        var passwordErrorMsgTag = document.getElementById("password1-error-signup");
-        var password = document.getElementById("password1-signup").value;
-        return validate_password(password, passwordErrorMsgTag);
-    }
-
-    const validate_password2_signup = () => {
-        var passwordErrorMsgTag = document.getElementById("password2-error-signup");
-        var password1 = document.getElementById("password1-signup").value;
-        var password2 = document.getElementById("password2-signup").value;
-
-        if (password2.length === 0) {
-            passwordErrorMsgTag.style.color = "red";
-            passwordErrorMsgTag.innerHTML = "Password required";
-            return false;
-        }
-        else if (password1 === password2) {
-            passwordErrorMsgTag.innerHTML = ""; //"Validation Successfull";
-            return true;
-        }
-        else {
-            passwordErrorMsgTag.style.color = "red";
-            passwordErrorMsgTag.innerHTML = "Password doesn't match";
-            return false;
-        }
-    }
 
     const create_user = () => {
-        if (validate_name_signup() && validate_email_signup() && validate_password1_signup() && validate_password2_signup()) {
-            console.log("Signup Call here");
-            let signup_data = {
-                name: document.getElementById('name-signup').value,
-                email: document.getElementById("email-signup").value,
-                password: document.getElementById("password1-signup").value,
-            }
-            fetch(`${API_URL}/signup/`, {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                body: JSON.stringify(signup_data)
-            }).then(response => response.json()).then(data => {
-                console.log(data);
-                if (data.status) {
-                    window.location.href = `${API_URL}/home/`;
-                }
-                else {
-                    console.log(data.msg);
-                    Swal.fire(
-                        {
-                            title: 'Warning!',
-                            text: data.msg,
-                            icon: 'warning',
-                            confirmButtonText: 'Okay'
-                        }
-                    )
-                }
-            })
+        if (!validUsername) {
+            setToastMsg({ severity: 'error', summary: 'Warning', detail: 'Invalid username!', life: 2000 });
+            return false;
         }
+        if (!validEmail) {
+            setToastMsg({ severity: 'error', summary: 'Warning', detail: 'Invalid email!', life: 2000 });
+            return false;
+        }
+        if (!validPassword1) {
+            setToastMsg({ severity: 'error', summary: 'Warning', detail: 'Password is not strong!', life: 2000 });
+            return false;
+        }
+        if (!validPassword2) {
+            setToastMsg({ severity: 'error', summary: 'Warning', detail: 'Confirm password should be same as entered password!', life: 2000 });
+            return false;
+        }
+
+        console.log("Signup Call here");
+        setLoadingBarProgress(30);
+        fetch(`${API_URL}/signup/`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+                name: username,
+                email: email,
+                password: password2,
+            }),
+        }).then(res => res.json())
+            .then(
+                (result) => {
+                    if (result['status']) {
+                        setToastMsg({ severity: 'success', summary: 'Success', detail: result.msg, life: 3000 });
+                        setLoadingBarProgress(90);
+                        setTimeout(() => {
+                            window.location.href = `${API_URL}/home/`;
+                        }, 1500);
+                    }
+                    else {
+                        console.log(result.msg);
+                        Swal.fire(
+                            {
+                                title: 'Warning!',
+                                text: result.msg,
+                                icon: 'warning',
+                                confirmButtonText: 'Okay'
+                            }
+                        )
+                        setLoadingBarProgress(100);
+                    }
+                },
+                (error) => {
+                    console.error(error);
+                    setToastMsg({ severity: 'error', summary: 'Error', detail: 'Functional error!', life: 3000 });
+                    setLoadingBarProgress(100);
+                }
+            );
     }
 
+    const passwordFooter = (
+        <>
+            <Divider />
+            <p className="mt-2">Suggestions</p>
+            <ul className="pl-2 ml-2 mt-0 line-height-3">
+                <li>At least one lowercase</li>
+                <li>At least one uppercase</li>
+                <li>At least one numeric</li>
+                <li>At least one special character</li>
+                <li>Minimum 8 characters, Maximum 32 characters</li>
+            </ul>
+        </>
+    );
 
     return (
         <>
@@ -135,50 +128,69 @@ function Signup(props) {
                                     <div className="row justify-content-center">
                                         <div className="col-md-10 col-lg-6 col-xl-5 order-2 order-lg-1">
 
-                                            <p className="text-center h1 fw-bold mb-3 mx-1 mx-md-4 mt-4">Sign up</p>
+                                            <p className="text-center h2 fw-medium mb-3 mx-1 mx-md-4 mt-4">Sign up</p>
 
-                                            <form className="mx-1 mx-md-4" id="signupForm">
+                                            <form className="mx-1 mx-md-4">
 
-                                                <div className="d-flex flex-row align-items-center mb-2">
-                                                    <i className="fas fa-user fa-lg me-3 fa-fw"></i>
-                                                    <div className="form-outline flex-fill mb-0">
-                                                        <label className="form-label" htmlFor="name-signup">Name</label>
-                                                        <input type="text" id="name-signup" className="form-control" onKeyUp={validate_name_signup} />
-                                                        <span id="name-error-signup"></span>
-                                                    </div>
+                                                {/* <!-- Username input --> */}
+                                                <div className="p-inputgroup flex-1 my-2">
+                                                    <span className="p-inputgroup-addon">
+                                                        <i className="pi pi-user"></i>
+                                                    </span>
+                                                    <InputText
+                                                        value={username}
+                                                        onChange={(e) => setUsername(e.target.value)}
+                                                        placeholder='Username'
+                                                    />
                                                 </div>
 
-                                                <div className="d-flex flex-row align-items-center mb-2">
-                                                    <i className="fas fa-envelope fa-lg me-3 fa-fw"></i>
-                                                    <div className="form-outline flex-fill mb-0">
-                                                        <label className="form-label" htmlFor="email-signup">Email</label>
-                                                        <input type="email" id="email-signup" className="form-control" onKeyUp={validate_email_signup} />
-                                                        <span id="email-error-signup"></span>
-                                                    </div>
+                                                {/* <!-- Email input --> */}
+                                                <div className="p-inputgroup flex-1 my-2">
+                                                    <span className="p-inputgroup-addon">
+                                                        <i className="pi pi-envelope"></i>
+                                                    </span>
+                                                    <InputText
+                                                        type='email'
+                                                        value={email}
+                                                        onChange={(e) => setEmail(e.target.value)}
+                                                        placeholder='Email'
+                                                    />
                                                 </div>
 
-                                                <div className="d-flex flex-row align-items-center mb-2">
-                                                    <i className="fas fa-lock fa-lg me-3 fa-fw"></i>
-                                                    <div className="form-outline flex-fill mb-0">
-                                                        <label className="form-label" htmlFor="password1-signup">Password</label>
-                                                        <div className="input-group">
-                                                            <input type="password" id="password1-signup" className="form-control" onKeyUp={validate_password1_signup} />
-                                                            <i className="bi bi-eye input-group-text password-eye" id="toggle-password1-type" onClick={onPassword1Toggle}></i>
-                                                        </div>
-                                                        <span id="password1-error-signup"></span>
-                                                    </div>
+                                                {/* <!-- Password1 input --> */}
+                                                <div className="p-inputgroup flex-1 my-2">
+                                                    <span className="p-inputgroup-addon">
+                                                        <i className="pi pi-lock"></i>
+                                                    </span>
+                                                    <Password
+                                                        value={password1}
+                                                        onChange={(e) => setPassword1(e.target.value)}
+                                                        placeholder='Password'
+                                                        footer={passwordFooter}
+                                                        strongRegex={getPasswordRegex()}
+                                                        ref={password1Ref}
+                                                    />
+                                                    <span className="p-inputgroup-addon">
+                                                        <i className="pi pi-eye" onClick={(e) => togglePasswordState(e.target, password1Ref)}></i>
+                                                    </span>
                                                 </div>
 
-                                                <div className="d-flex flex-row align-items-center mb-2">
-                                                    <i className="fas fa-key fa-lg me-3 fa-fw"></i>
-                                                    <div className="form-outline flex-fill mb-0">
-                                                        <label className="form-label" htmlFor="password2-signup">Confirm password</label>
-                                                        <div className="input-group">
-                                                            <input type="password" id="password2-signup" className="form-control" onKeyUp={validate_password2_signup} />
-                                                            <i className="bi bi-eye input-group-text password-eye" id="toggle-password2-type" onClick={onPassword2Toggle}></i>
-                                                        </div>
-                                                        <span id="password2-error-signup"></span>
-                                                    </div>
+                                                {/* <!-- Password2 input --> */}
+                                                <div className="p-inputgroup flex-1 my-2">
+                                                    <span className="p-inputgroup-addon">
+                                                        <i className="pi pi-lock"></i>
+                                                    </span>
+                                                    <Password
+                                                        value={password2}
+                                                        onChange={(e) => setPassword2(e.target.value)}
+                                                        placeholder='Confirm Password'
+                                                        strongRegex={getPasswordRegex()}
+                                                        ref={password2Ref}
+                                                        feedback={false}
+                                                    />
+                                                    <span className="p-inputgroup-addon">
+                                                        <i className="pi pi-eye" onClick={(e) => togglePasswordState(e.target, password2Ref)}></i>
+                                                    </span>
                                                 </div>
 
                                                 <div className="text-center text-start mt-2 pt-0 justify-content-center justify-content-start">
@@ -186,7 +198,7 @@ function Signup(props) {
                                                         onClick={create_user}>Submit</button><br />
                                                     <span id="submit-error-signup"></span>
                                                     <p className="small fw-bold mt-1 mb-0">Already have an account?
-                                                        <Link id="register_btn" className="link-danger m-1 p-0 auth-link" to="/login">Login</Link>
+                                                        <Link className="link-danger m-1 p-0" to="/login">Login</Link>
                                                     </p>
                                                 </div>
 
@@ -195,7 +207,7 @@ function Signup(props) {
                                         </div>
                                         <div className="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center order-1 order-lg-2">
 
-                                            <img src="/static/img/draw1.webp" className="img-fluid" alt="Sample" />
+                                            <img src="https://expense-tracker-cdn.s3.ap-south-1.amazonaws.com/images/draw1.webp" className="img-fluid" alt="Sample" />
 
                                         </div>
                                     </div>
