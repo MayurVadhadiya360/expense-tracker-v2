@@ -7,7 +7,6 @@ ExpenseTracker is a web application for tracking personal expenses and income. I
 - [Usage](#usage)
 - [API Endpoints](#API-Endpoints)
 - [Technologies Used](#Technologies-Used)
-- [Contributing](#Contributing)
 - [License](#License)
 
 ## Features
@@ -160,3 +159,6 @@ npm start
 - URL: POST /logout/
 - View: logout
 - Description: Logs out the current user.
+
+## License
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/MayurVadhadiya360/expense-tracker-v2?tab=MIT-1-ov-file) file for more details.
