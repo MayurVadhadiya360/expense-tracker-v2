@@ -97,17 +97,17 @@ npm start
 
 ### Forgot Password
 #### Get Email for Password Reset
-- URL: `POST /fp_get_email/`
+- URL: `POST /fp-get-email/`
 - View: `fp_get_email`
 - Description: Sends a password reset OTP to the provided email.
 
 #### Submit OTP for Password Reset
-- URL: `POST /fp_otp_submit/`
+- URL: `POST /fp-otp-submit/`
 - View: `fp_otp_submit`
 - Description: Validates the OTP sent to the user's email.
 
 #### Submit New Password
-- URL: `POST /fp_password_submit/`
+- URL: `POST /fp-password-submit/`
 - View: `fp_password_submit`
 - Description: Updates the user's password.
 
@@ -123,7 +123,7 @@ npm start
 - Description: Adds a new transaction for the logged-in user.
 
 #### Edit an Existing Transaction
-- URL: `POST /edit_expense/`
+- URL: `POST /update_expense/`
 - View: `update_expense`
 - Description: Edits an existing transaction for the logged-in user.
 
