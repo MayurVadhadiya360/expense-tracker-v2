@@ -71,13 +71,92 @@ npm install
 
 npm start
 ```
+
 ## Usage
 1. Open your browser and navigate to `http://localhost:3000` to access the frontend.
 2. Use `http://localhost:8000` for API requests.
 3. Make apropriate changes in views to use it in development of front end, as views are written be to used in production.
     - You can define hardcodes `email` to use during development of `expense-tracker-mainapp`
 4. You can gain updated files of `frontend` by running `npm run build` and update it in `templates` and `static` file of django project.
+
 ## API Endpoints
 ### Authentication
-1. POST /signup/ - Register a new user
-2. POST /login/ - Login a user
+#### Register a New User
+- URL: POST /signup/
+- View: signup
+- Description: Registers a new user with name, email, and password.
+
+#### Login a User
+- URL: POST /login/
+- View: login
+- Description: Logs in a user with email and password.
+
+#### Get User Details
+- URL: GET /get_user/
+- View: get_user
+- Description: Retrieves details of the logged-in user.
+
+### Forgot Password
+#### Get Email for Password Reset
+- URL: POST /fp_get_email/
+- View: fp_get_email
+- Description: Sends a password reset OTP to the provided email.
+
+#### Submit OTP for Password Reset
+- URL: POST /fp_otp_submit/
+- View: fp_otp_submit
+- Description: Validates the OTP sent to the user's email.
+
+#### Submit New Password
+- URL: POST /fp_password_submit/
+- View: fp_password_submit
+- Description: Updates the user's password.
+
+### Transactions
+#### Retrieve All Transactions
+- URL: GET /get_expense/
+- View: get_expense
+- Description: Retrieves all transactions of the logged-in user.
+
+#### Add a New Transaction
+- URL: POST /add_expense/
+- View: add_expense
+- Description: Adds a new transaction for the logged-in user.
+
+#### Edit an Existing Transaction
+- URL: PUT /edit_expense/
+- View: update_expense
+- Description: Edits an existing transaction for the logged-in user.
+
+#### Delete a Transaction
+- URL: DELETE /delete_expense/
+- View: delete_expense
+- Description: Deletes a transaction for the logged-in user.
+
+### Categories
+#### Retrieve All Categories
+- URL: GET /get_category/
+- View: get_category
+- Description: Retrieves all categories of the logged-in user.
+
+#### Add a New Category
+- URL: POST /add_category/
+- View: add_category
+- Description: Adds a new category for the logged-in user.
+
+#### Delete a Category
+- URL: DELETE /delete_category/
+- View: delete_category
+- Description: Deletes a category for the logged-in user.
+
+### Insights
+#### Get Insights Data
+- URL: POST /get_insights_data/
+- View: get_insights_data
+- Description: Retrieves insights data for the logged-in user based on filters.
+
+### Logout
+#### Logout User
+- URL: POST /logout/
+- View: logout
+- Description: Logs out the current user.
