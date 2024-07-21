@@ -26,7 +26,7 @@ MONGO_COLLECTION_EXPENSE = settings.MONGO_COLLECTION_EXPENSE
 MONGO_COLLECTION_OTP = settings.MONGO_COLLECTION_OTP
 
 if settings.DEBUG:
-    TEST_ACCOUNT_EMAIL = 'mayurvadhadiya5@gmail.com'
+    TEST_ACCOUNT_EMAIL = 'test-account-mail@example.com'
 else:
     TEST_ACCOUNT_EMAIL = None
 # Create your views here.
