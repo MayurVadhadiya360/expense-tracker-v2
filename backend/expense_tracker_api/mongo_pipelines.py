@@ -509,6 +509,7 @@ def month_year_type_amount_pipeline(initMatchStage:dict):
                     'type': "$type"
                 },
                 'pipeline': [
+                    initMatchStage,
                     {
                         '$match': {
                             '$expr': {

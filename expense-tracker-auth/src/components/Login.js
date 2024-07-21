@@ -8,6 +8,7 @@ import { togglePasswordState, getEmailRegex, getPasswordRegex } from './utils/Au
 
 function Login(props) {
     const API_URL = props.API_URL;
+    const INIT_PATH = props.INIT_PATH;
     const setToastMsg = props.setToastMsg;
     const setLoadingBarProgress = props.setLoadingBarProgress;
 
@@ -149,7 +150,7 @@ function Login(props) {
                                                 <div className="d-flex justify-content-between align-items-center">
                                                     {/* <!-- Checkbox --> */}
                                                     <span className="text-body m-0 p-0 ">
-                                                        <Link className='forgot-password' to='/reset-password'>Forgot password?</Link>
+                                                        <Link className='forgot-password' to={`${INIT_PATH}/reset-password`}>Forgot password?</Link>
                                                     </span>
                                                 </div>
 
@@ -158,7 +159,7 @@ function Login(props) {
                                                         onClick={login_user}>Login</button>
                                                     <span id="submit-error-login"></span>
                                                     <p className="small fw-bold mt-1 mb-0">Don't have an account?
-                                                        <Link className="link-danger m-1 p-0" to="/signup">Sign up</Link>
+                                                        <Link className="link-danger m-1 p-0" to={`${INIT_PATH}/signup`}>Sign up</Link>
                                                     </p>
                                                 </div>
                                             </form>

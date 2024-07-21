@@ -8,6 +8,7 @@ import { togglePasswordState, getEmailRegex, getPasswordRegex } from './utils/Au
 
 function Signup(props) {
     const API_URL = props.API_URL;
+    const INIT_PATH = props.INIT_PATH;
     const setToastMsg = props.setToastMsg;
     const setLoadingBarProgress = props.setLoadingBarProgress;
 
@@ -198,7 +199,7 @@ function Signup(props) {
                                                         onClick={create_user}>Submit</button><br />
                                                     <span id="submit-error-signup"></span>
                                                     <p className="small fw-bold mt-1 mb-0">Already have an account?
-                                                        <Link className="link-danger m-1 p-0" to="/login">Login</Link>
+                                                        <Link className="link-danger m-1 p-0" to={`${INIT_PATH}/login`}>Login</Link>
                                                     </p>
                                                 </div>
 

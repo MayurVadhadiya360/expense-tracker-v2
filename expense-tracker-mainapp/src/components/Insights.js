@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react'
 import { GlobalDataContext } from '../App';
 import { generateColorPalette } from './utils/helperfunctions';
+import { dropdownIconValueTemplate, selectedDropdownIconValueTemplate } from './utils/templates';
 import { Tag } from 'primereact/tag';
 import { Chart } from 'primereact/chart';
 import { Dropdown } from 'primereact/dropdown';
@@ -82,7 +83,8 @@ function InsightCategoryTypeTotalAmount({ filter = false, chartHeight = '30rem' 
             setCategoryTypeInsightData: setInsightData,
             dates: dates,
             setToastMsg: setToastMsg,
-        })
+        });
+        // eslint-disable-next-line
     }, [dates]);
 
     useEffect(() => {
@@ -125,22 +127,6 @@ function InsightCategoryTypeTotalAmount({ filter = false, chartHeight = '30rem' 
         setChartOptions(options);
     }, [insightData, selectedType]);
 
-    const typeTemplate = (option) => {
-        return (
-            <div className='d-flex align-items-center'>
-                <i className={`pi ${option.icon} me-1`}></i>
-                <div>{option.value}</div>
-            </div>
-        )
-    }
-
-    const selectedTypeTemplate = (option, props) => {
-        if (option) {
-            return typeTemplate(option);
-        }
-        return <span>{props.placeholder}</span>;
-    }
-
     return (
         <>
             <div className="card ">
@@ -157,8 +143,8 @@ function InsightCategoryTypeTotalAmount({ filter = false, chartHeight = '30rem' 
                                 options={expenseTypeOptions}
                                 optionLabel="value"
                                 optionValue='value'
-                                valueTemplate={selectedTypeTemplate}
-                                itemTemplate={typeTemplate}
+                                valueTemplate={selectedDropdownIconValueTemplate}
+                                itemTemplate={dropdownIconValueTemplate}
                                 placeholder="Select a Type"
                                 checkmark={true}
                                 className="w-full md:w-14rem my-1"
@@ -197,10 +183,13 @@ function InsightDateTypeTotalAmount({ filter = false, chartType = 'line', daysCo
     const [chartData, setChartData] = useState({});
     const [chartOptions, setChartOptions] = useState({});
     const [insightData, setInsightData] = useState([]);
-    const chartTypeOptions = ['line', 'bar'];
     const [selectedChartType, setSelectedChartType] = useState(chartType);
     const [dates, setDates] = useState(null);
     const [selectedCategories, setSelectedCategories] = useState([]);
+    const chartTypeOptions1 = [
+        { value: 'line', icon: 'pi pi-chart-line' },
+        { value: 'bar', icon: 'pi pi-chart-bar' },
+    ]
 
     useEffect(() => {
         getInsightData({
@@ -212,7 +201,7 @@ function InsightDateTypeTotalAmount({ filter = false, chartType = 'line', daysCo
             selectedCategories: selectedCategories,
             setToastMsg: setToastMsg,
         });
-
+        // eslint-disable-next-line
     }, [dates, selectedCategories, daysCount]);
 
     useEffect(() => {
@@ -263,8 +252,12 @@ function InsightDateTypeTotalAmount({ filter = false, chartType = 'line', daysCo
                         <div className='d-flex justify-content-around row px-2'>
                             <Dropdown
                                 value={selectedChartType}
-                                options={chartTypeOptions}
+                                options={chartTypeOptions1}
                                 onChange={(e) => setSelectedChartType(e.value)}
+                                optionLabel="value"
+                                optionValue='value'
+                                valueTemplate={selectedDropdownIconValueTemplate}
+                                itemTemplate={dropdownIconValueTemplate}
                                 placeholder="Select a Type"
                                 checkmark={true}
                                 className="col-md-auto my-1 chart-type"
@@ -322,6 +315,7 @@ function InsightMonthYearTypeTotalAmount({ chartHeight = '30rem' }) {
             setMonthYearTypeInsightData: setInsightData,
             setToastMsg: setToastMsg,
         });
+        // eslint-disable-next-line
     }, []);
 
     useEffect(() => {

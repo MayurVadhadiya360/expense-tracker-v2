@@ -17,13 +17,18 @@ import traceback
 from .mongo_pipelines import category_type_amount_pipeline, date_type_amount_pipeline, month_year_type_amount_pipeline
 
 
-mongo_client = pymongo.MongoClient(settings.MONGO_CONNECTION_URL)
-mongo_db = mongo_client[settings.MONGO_DATABASE]
+MONGO_CLIENT = pymongo.MongoClient(settings.MONGO_CONNECTION_URL)
+MONGO_DB = MONGO_CLIENT[settings.MONGO_DATABASE]
 
 MONGO_COLLECTION_AUTH = settings.MONGO_COLLECTION_AUTH
 MONGO_COLLECTION_CATEGORY = settings.MONGO_COLLECTION_CATEGORY
 MONGO_COLLECTION_EXPENSE = settings.MONGO_COLLECTION_EXPENSE
 MONGO_COLLECTION_OTP = settings.MONGO_COLLECTION_OTP
+
+if settings.DEBUG:
+    TEST_ACCOUNT_EMAIL = 'mayurvadhadiya5@gmail.com'
+else:
+    TEST_ACCOUNT_EMAIL = None
 # Create your views here.
 
 def custom_404(request, exception):
@@ -44,7 +49,7 @@ class login(View):
             if not email or not password:
                 return JsonResponse({'status': False, 'msg': "Email and password are required!"})
 
-            mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
+            mongo_col = MONGO_DB[MONGO_COLLECTION_AUTH]
             result = mongo_col.find_one({'_id': email})
 
             if result is None:
@@ -81,7 +86,7 @@ class signup(View):
             hashed_password = make_password(password)
             print(hashed_password)
 
-            mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
+            mongo_col = MONGO_DB[MONGO_COLLECTION_AUTH]
             new_user = {
                 '_id': email,
                 'name': name,
@@ -92,7 +97,7 @@ class signup(View):
             if insert_status.inserted_id:
                 request.session['email'] = email
                 print(request.session.items())
-                mongo_cat_col = mongo_db[MONGO_COLLECTION_CATEGORY]
+                mongo_cat_col = MONGO_DB[MONGO_COLLECTION_CATEGORY]
                 insert_col_status = mongo_cat_col.insert_one({'_id': email, 'category': ['Recharge/Bill', 'Income', 'Food/Drinks', 'Transportation']})
                 return JsonResponse({'status': True, 'msg': 'Account created!'})
             else:
@@ -108,9 +113,10 @@ class signup(View):
 def get_user(request):
     try:
         email = request.session.get('email', None)
+        if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
         if not email: return redirect('login')
 
-        mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
+        mongo_col = MONGO_DB[MONGO_COLLECTION_AUTH]
         user_data = mongo_col.find_one({'_id': email})
         if user_data:
             return JsonResponse({'status': True, 'user_data': user_data})
@@ -128,13 +134,13 @@ def fp_get_email(request):
             request_body = json.loads(request.body)
             fp_email = request_body['fp_email']
 
-            mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
+            mongo_col = MONGO_DB[MONGO_COLLECTION_AUTH]
             result = mongo_col.find_one({'_id': fp_email})
 
             if result:
                 otp = str(random.randint(100000, 999999))
 
-                mongo_col_otp = mongo_db[MONGO_COLLECTION_OTP]
+                mongo_col_otp = MONGO_DB[MONGO_COLLECTION_OTP]
                 try: 
                     mongo_col_otp.insert_one({
                         'email': fp_email,
@@ -179,7 +185,7 @@ def fp_otp_submit(request):
             if not fp_email or not fp_otp_check:
                 return JsonResponse({'status': False, 'msg': "Email and OTP are required."})
             
-            mongo_col_otp = mongo_db[MONGO_COLLECTION_OTP]
+            mongo_col_otp = MONGO_DB[MONGO_COLLECTION_OTP]
             otp_data = mongo_col_otp.find_one({'email': fp_email})
             if otp_data:
                 fp_otp  = otp_data['otp']
@@ -209,10 +215,10 @@ def fp_password_submit(request):
             
             hashed_fp_password = make_password(fp_password)
             
-            mongo_col_otp = mongo_db[MONGO_COLLECTION_OTP]
+            mongo_col_otp = MONGO_DB[MONGO_COLLECTION_OTP]
             otp_data = mongo_col_otp.find_one({'email': fp_email})
             if otp_data:
-                mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
+                mongo_col = MONGO_DB[MONGO_COLLECTION_AUTH]
                 auth_data = mongo_col.update_one(
                     {
                         '_id': fp_email
@@ -239,6 +245,7 @@ def fp_password_submit(request):
 # Views
 def home(request):
     email = request.session.get('email', None)
+    if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
     if email:
         res_context = {
             'email': email,
@@ -257,9 +264,10 @@ def insights(request):
 def get_expense(request):
     try:
         email = request.session.get('email', None)
+        if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
         if not email: return redirect('login')
 
-        mongo_col = mongo_db[MONGO_COLLECTION_EXPENSE]
+        mongo_col = MONGO_DB[MONGO_COLLECTION_EXPENSE]
         result = mongo_col.find({'email': email}).sort('date', pymongo.DESCENDING)
         expenses = [{**trans, '_id': str(trans['_id'])} for trans in result]
 
@@ -271,9 +279,10 @@ def get_expense(request):
 def get_category(request):
     try:
         email = request.session.get('email', None)
+        if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
         if not email: return redirect('login')
 
-        mongo_col = mongo_db[MONGO_COLLECTION_CATEGORY]
+        mongo_col = MONGO_DB[MONGO_COLLECTION_CATEGORY]
         result = mongo_col.find_one({'_id': email})
         if result:
             return JsonResponse({'status': True, 'category': result['category']})
@@ -286,6 +295,7 @@ def get_category(request):
 def add_expense(request):
     if request.method == 'POST':
         email = request.session.get('email', None)
+        if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
         if not email: return redirect('login')
 
         user_data = json.loads(request.body)
@@ -307,7 +317,7 @@ def add_expense(request):
                 'type': expenseType,
             }
             try:
-                mongo_col = mongo_db[MONGO_COLLECTION_EXPENSE]
+                mongo_col = MONGO_DB[MONGO_COLLECTION_EXPENSE]
                 result = mongo_col.insert_one(data)
                 if result.inserted_id:
                     return JsonResponse({'status': True, 'msg': "Successfully added expense!"})
@@ -324,6 +334,7 @@ def add_expense(request):
 def add_category(request):
     if request.method == 'POST':
         email = request.session.get('email', None)
+        if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
         if not email: return redirect('login')
 
         user_data = json.loads(request.body)
@@ -331,7 +342,7 @@ def add_category(request):
 
         if category:
             try:
-                mongo_col = mongo_db[MONGO_COLLECTION_CATEGORY]
+                mongo_col = MONGO_DB[MONGO_COLLECTION_CATEGORY]
                 result = mongo_col.update_one({'_id': email}, {'$addToSet': {'category': category}})
                 if result.modified_count:
                     return JsonResponse({'status': True, 'msg': f"New category '{category}' added!"})
@@ -351,6 +362,7 @@ def update_expense(request):
     if request.method == 'POST':
         try:
             email = request.session.get('email', None)
+            if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
             if not email: return redirect('login')
 
             user_data = json.loads(request.body)
@@ -375,7 +387,7 @@ def update_expense(request):
                 'email': email,
             }
 
-            mongo_col = mongo_db[MONGO_COLLECTION_EXPENSE]
+            mongo_col = MONGO_DB[MONGO_COLLECTION_EXPENSE]
             result = mongo_col.update_one(filter_doc, {"$set": update_doc})
             print(result.raw_result)
             if result.modified_count:
@@ -398,9 +410,10 @@ def delete_expense(request):
             print(expense_id)
 
             email = request.session.get('email', None)
+            if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
             if not email: return redirect('login')
 
-            mongo_col = mongo_db[MONGO_COLLECTION_EXPENSE]
+            mongo_col = MONGO_DB[MONGO_COLLECTION_EXPENSE]
             result = mongo_col.delete_one({'_id': ObjectId(expense_id), "email": email})
             if result.deleted_count:
                 return JsonResponse({'status': True, 'msg': 'Expense deleted successfully!'})
@@ -420,9 +433,10 @@ def delete_category(request):
             print(category)
 
             email = request.session.get('email', None)
+            if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
             if not email: return redirect('login')
 
-            mongo_col = mongo_db[MONGO_COLLECTION_CATEGORY]
+            mongo_col = MONGO_DB[MONGO_COLLECTION_CATEGORY]
             result = mongo_col.update_one(
                 {'_id': email}, 
                 {'$pull': {'category': category}}
@@ -452,9 +466,10 @@ def get_insights_data(request):
             response_data = {}
 
             email = request.session.get('email', None)
+            if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
             if not email: return redirect('login')
 
-            mongo_col = mongo_db[MONGO_COLLECTION_EXPENSE]
+            mongo_col = MONGO_DB[MONGO_COLLECTION_EXPENSE]
 
             initMatchStage = {
                 '$match': {

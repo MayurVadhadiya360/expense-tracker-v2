@@ -10,7 +10,7 @@ import { Divider } from 'primereact/divider';
 
 function Navbar(props) {
     const navigate = useNavigate();
-    const { API_URL, setVisibleDialogExpense, setDialogActiveIndex, setToastMsg } = useContext(GlobalDataContext);
+    const { API_URL, INIT_PATH, setVisibleDialogExpense, setDialogActiveIndex, setToastMsg } = useContext(GlobalDataContext);
     const [visibleSidebar, setVisibleSidebar] = useState(false);
     const [userData, setUserData] = useState({});
 
@@ -35,6 +35,7 @@ function Navbar(props) {
 
     useEffect(() => {
         getUserData();
+        // eslint-disable-next-line
     }, []);
 
     const items = [
@@ -42,21 +43,21 @@ function Navbar(props) {
             label: 'Home',
             icon: 'pi pi-home',
             command: () => {
-                navigate('/home');
+                navigate(`${INIT_PATH}/home`);
             }
         },
         {
             label: 'Expenses',
             icon: 'pi pi-receipt',
             command: () => {
-                navigate('/expense');
+                navigate(`${INIT_PATH}/expense`);
             }
         },
         {
             label: 'Insights',
             icon: 'pi pi-chart-bar',
             command: () => {
-                navigate('/insights');
+                navigate(`${INIT_PATH}/insights`);
             }
         },
 

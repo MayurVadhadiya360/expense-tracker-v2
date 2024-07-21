@@ -85,6 +85,23 @@ const SelectItemTemplate = (option) => {
 }
 export { SelectItemTemplate };
 
+const dropdownIconValueTemplate = (option) => {
+    return (
+        <div className='d-flex align-items-center'>
+            <i className={`pi ${option.icon} me-1`}></i>
+            <div>{option.value}</div>
+        </div>
+    )
+}
+
+const selectedDropdownIconValueTemplate = (option, props) => {
+    if (option) {
+        return dropdownIconValueTemplate(option);
+    }
+    return <span>{props.placeholder}</span>;
+}
+export {dropdownIconValueTemplate, selectedDropdownIconValueTemplate};
+
 
 // Editors
 const textEditor = (options) => {

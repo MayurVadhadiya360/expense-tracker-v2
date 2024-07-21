@@ -11,6 +11,7 @@ import { getEmailRegex, getPasswordRegex } from './utils/AuthHelpers';
 
 function ForgotPassword(props) {
     const API_URL = props.API_URL;
+    const INIT_PATH = props.INIT_PATH;
     const setLoadingBarProgress = props.setLoadingBarProgress;
     const setToastMsg = props.setToastMsg;
 
@@ -145,7 +146,7 @@ function ForgotPassword(props) {
                         setToastMsg({ severity: 'success', summary: 'Success', detail: result.msg, life: 5000 });
                         setLoadingBarProgress(80);
                         setTimeout(() => {
-                            navigate('/login');
+                            navigate(`${INIT_PATH}/login`);
                             setLoadingBarProgress(100);
                         }, 1000);
                     }

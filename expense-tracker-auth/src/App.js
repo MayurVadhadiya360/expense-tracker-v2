@@ -12,6 +12,8 @@ import { Toast } from 'primereact/toast';
 
 function App() {
   const API_URL = window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL;
+  const INIT_PATH = window._env_.REACT_APP_INIT_PATH || process.env.REACT_APP_INIT_PATH;
+
   const [loadingBarProgress, setLoadingBarProgress] = useState(0);
 
   const toast = useRef(null);
@@ -32,19 +34,23 @@ function App() {
         <Routes>
 
           <Route exact path='/'
-            element={<Navigate to='/login' />}
+            element={<Navigate to={`${INIT_PATH}/login`} />}
           />
 
-          <Route exact path="/login"
-            element={<Login API_URL={API_URL} setToastMsg={setToastMsg} setLoadingBarProgress={setLoadingBarProgress} />}
+          <Route exact path={INIT_PATH}
+            element={<Navigate to={`${INIT_PATH}/login`} />}
           />
 
-          <Route exact path="/signup"
-            element={<Signup API_URL={API_URL} setToastMsg={setToastMsg} setLoadingBarProgress={setLoadingBarProgress} />}
+          <Route exact path={`${INIT_PATH}/login`}
+            element={<Login API_URL={API_URL} INIT_PATH={INIT_PATH} setToastMsg={setToastMsg} setLoadingBarProgress={setLoadingBarProgress} />}
           />
 
-          <Route exact path="/reset-password"
-            element={<ForgotPassword API_URL={API_URL} setToastMsg={setToastMsg} setLoadingBarProgress={setLoadingBarProgress} />}
+          <Route exact path={`${INIT_PATH}/signup`}
+            element={<Signup API_URL={API_URL} INIT_PATH={INIT_PATH} setToastMsg={setToastMsg} setLoadingBarProgress={setLoadingBarProgress} />}
+          />
+
+          <Route exact path={`${INIT_PATH}/reset-password`}
+            element={<ForgotPassword API_URL={API_URL} INIT_PATH={INIT_PATH} setToastMsg={setToastMsg} setLoadingBarProgress={setLoadingBarProgress} />}
           />
 
         </Routes>

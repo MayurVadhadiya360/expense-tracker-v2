@@ -18,6 +18,8 @@ export const GlobalDataContext = createContext();
 
 function App() {
   const API_URL = window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL;
+  const INIT_PATH = window._env_.REACT_APP_INIT_PATH || process.env.REACT_APP_INIT_PATH;
+
   const [expenseData, setExpenseData] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categorySeverity, setCategorySeverity] = useState({});
@@ -73,6 +75,7 @@ function App() {
   useEffect(() => {
     fetchCategoryData();
     fetchExpenseData();
+    // eslint-disable-next-line
   }, []);
 
   // (Re)Calculate severity/color-style for category
@@ -89,6 +92,7 @@ function App() {
 
   const contextValue = {
     API_URL,
+    INIT_PATH,
     categories,
     setCategories,
     fetchCategoryData,
@@ -131,10 +135,11 @@ function App() {
             </div>
           </Dialog>
           <Routes>
-            <Route exact path='/' element={<Navigate to='/home' />}></Route>
-            <Route exact path='/home' element={<HomePage />}></Route>
-            <Route exact path='/expense' element={<ExpensePage />}></Route>
-            <Route exact path='/insights' element={<Insights />}></Route>
+            <Route exact path='/' element={<Navigate to={`${INIT_PATH}/home`}/>}></Route>
+            <Route exact path={INIT_PATH} element={<Navigate to={`${INIT_PATH}/home`}/>}></Route>
+            <Route exact path={`${INIT_PATH}/home`} element={<HomePage />}></Route>
+            <Route exact path={`${INIT_PATH}/expense`} element={<ExpensePage />}></Route>
+            <Route exact path={`${INIT_PATH}/insights`} element={<Insights />}></Route>
           </Routes>
         </Router>
       </GlobalDataContext.Provider>
