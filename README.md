@@ -15,6 +15,7 @@ ExpenseTracker is a web application for tracking personal expenses and income. I
 - Categorize transactions (e.g., Food, Transport, Salary).
 - View transactions sorted by date,category,amount, etc.
 - View charts and graphs to gain insights in past expenses.
+- Profile Update and Profile Picture with AWS S3.
 - Responsive UI with React and PrimeReact components.
 
 ## Installation
@@ -47,6 +48,10 @@ EMAIL_HOST_USER=yourmail@gmail.com
 EMAIL_HOST_PASSWORD=app-password-of-your-gmail-account
 DEFAULT_FROM_EMAIL=yourmail@gmail.com
 MONGO_CONNECTION_URL=mongodb://localhost:27017/
+AWS_ACCESS_KEY_ID=your-aws-access-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+AWS_STORAGE_BUCKET_NAME=s3-bucket-name
+AWS_S3_REGION_NAME=ap-south-1
 ```
 5. Run the Django development server:
 ```
@@ -71,9 +76,32 @@ npm install
 npm start
 ```
 
+### AWS S3 Configuration
+Ensure your AWS S3 bucket is properly configured with the necessary permissions for file upload and access. You need to allow public read access for objects so that users can see photos on their browser through website.
+You can use following bucket policy for enabling public read access:
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicRead",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": [
+                "s3:GetObject",
+                "s3:GetObjectVersion"
+            ],
+            "Resource": [
+                "arn:aws:s3:::your-bucket-name/profile_pics/*"
+            ]
+        }
+    ]
+}
+```
+
 ## Usage
 1. Open your browser and navigate to `http://localhost:3000` to access the frontend.
-2. Use `http://localhost:8000` for API requests. You can define `API URL` in `config.js`.
+2. Use `http://1270.0.0.1:8000` for API requests. You can define `API URL` in `config.js`.
 3. Make apropriate changes in views to use it in development of front end, as views are written be to used in production.
     - You can define hardcodes `email` to use during development of `expense-tracker-mainapp`
 4. You can gain updated files of `frontend` by running `npm run build` and update it in `templates` and `static` file of django project.
@@ -159,6 +187,14 @@ npm start
 - URL: `GET /logout/`
 - View: `logout`
 - Description: Logs out the current user.
+
+#### And More...
+
+## Technologies Used
+- Backend: Django, MongoDB, AWS S3
+- Frontend: React, PrimeReact
+- Authentication: Django sessions
+- Styling: CSS, PrimeReact themes
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](https://github.com/MayurVadhadiya360/expense-tracker-v2/blob/main/LICENSE) file for more details.

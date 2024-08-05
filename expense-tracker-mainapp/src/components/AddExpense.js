@@ -12,7 +12,7 @@ import { SelectButton } from 'primereact/selectbutton';
 
 
 function AddExpense({ header = true, }) {
-    const { API_URL, categories, categorySeverity, setToastMsg } = useContext(GlobalDataContext);
+    const { API_URL, categories, categorySeverity, setToastMsg, fetchExpenseData } = useContext(GlobalDataContext);
     const expenseTypeOptions = ['Paid', 'Received'];
 
     // Fields for new expense
@@ -81,6 +81,7 @@ function AddExpense({ header = true, }) {
                     (result) => {
                         if (result.status) {
                             setToastMsg({ severity: 'success', summary: 'Confirmed', detail: result.msg, life: 3000 });
+                            fetchExpenseData();
                             clearForm();
                         }
                         else {
@@ -116,8 +117,6 @@ function AddExpense({ header = true, }) {
 
     return (
         <>
-            {console.log('- add expense')}
-
             <div>
                 {
                     header &&

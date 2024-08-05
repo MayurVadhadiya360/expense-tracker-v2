@@ -26,7 +26,6 @@ function RecentExpenses(props) {
 
     return (
         <>
-            {console.log('- recent expense')}
             <div>
                 <div className='d-flex justify-content-center align-items-center header-p' >
                     <h3 >Recents</h3>

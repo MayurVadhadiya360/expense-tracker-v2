@@ -9,8 +9,6 @@ export default function HomePage(props) {
 
     return (
         <>
-            {console.log('- home page')}
-
             <div className='w-100 m-0 mt-2 my-1' >
                 <div className='card  p-2 m-1' >
                     <InsightDateTypeTotalAmount daysCount={15} chartHeight='20rem' titleHeader='Expense of Last 15 Days' />

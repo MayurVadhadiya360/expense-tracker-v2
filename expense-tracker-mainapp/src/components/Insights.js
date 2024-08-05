@@ -362,7 +362,6 @@ function InsightMonthYearTypeTotalAmount({ chartHeight = '30rem' }) {
 function Insights(props) {
     return (
         <>
-            {console.log('- insights page')}
             <div className='row w-100 m-auto'>
                 <div className='col-md-4 container p-1' >
                     <InsightCategoryTypeTotalAmount filter />

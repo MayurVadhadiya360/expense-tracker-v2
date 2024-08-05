@@ -14,16 +14,38 @@ import pymongo
 import json
 import random
 import traceback
-from .mongo_pipelines import category_type_amount_pipeline, date_type_amount_pipeline, month_year_type_amount_pipeline
+from .aws_s3_api import AWS_S3_API
+from .mongo_pipelines import date_type_amount_pipeline
+from .mongo_pipelines import category_type_amount_pipeline
+from .mongo_pipelines import month_year_type_amount_pipeline
 
 
 MONGO_CLIENT = pymongo.MongoClient(settings.MONGO_CONNECTION_URL)
 MONGO_DB = MONGO_CLIENT[settings.MONGO_DATABASE]
 
+def connect_to_mongo(database=None, mongo_client:bool=False):
+    """
+    Gives connection to mongodb client or database depending on the parameters. 
+    """
+    database = database or settings.MONGO_DATABASE
+
+    global MONGO_CLIENT
+    if MONGO_CLIENT is None:
+        MONGO_CLIENT = pymongo.MongoClient(settings.MONGO_CONNECTION_URL)
+    
+    if mongo_client: return MONGO_CLIENT
+    else: return MONGO_CLIENT[database]
+
+
 MONGO_COLLECTION_AUTH = settings.MONGO_COLLECTION_AUTH
 MONGO_COLLECTION_CATEGORY = settings.MONGO_COLLECTION_CATEGORY
 MONGO_COLLECTION_EXPENSE = settings.MONGO_COLLECTION_EXPENSE
 MONGO_COLLECTION_OTP = settings.MONGO_COLLECTION_OTP
+
+AWS_ACCESS_KEY_ID = settings.AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY = settings.AWS_SECRET_ACCESS_KEY
+AWS_STORAGE_BUCKET_NAME = settings.AWS_STORAGE_BUCKET_NAME
+AWS_S3_REGION_NAME = settings.AWS_S3_REGION_NAME
 
 if settings.DEBUG:
     TEST_ACCOUNT_EMAIL = 'test-account-mail@example.com'
@@ -50,7 +72,7 @@ class login(View):
                 return JsonResponse({'status': False, 'msg': "Email and password are required!"})
 
             mongo_col = MONGO_DB[MONGO_COLLECTION_AUTH]
-            result = mongo_col.find_one({'_id': email})
+            result = mongo_col.find_one({'email': email})
 
             if result is None:
                 return JsonResponse({'status': False, 'msg': "Account doesn't exist!"})
@@ -59,7 +81,6 @@ class login(View):
                 # if result['password'] == password:
                 if check_password(password, stored_hashed_password):
                     request.session['email'] = email
-                    print(request.session.items())
                     return JsonResponse({'status': True, 'msg': 'Login Success'})
                 else:
                     return JsonResponse({'status': False, 'msg': "Wrong password! Try again."})
@@ -78,17 +99,15 @@ class signup(View):
             name = user_data.get('name', None)
             email = user_data.get('email', None)
             password = user_data.get('password', None)
-            print(name, email, password)
 
             if not email or not password or not name:
                 return JsonResponse({'status': False, 'msg': "Username, email and password are required!"})
 
             hashed_password = make_password(password)
-            print(hashed_password)
 
             mongo_col = MONGO_DB[MONGO_COLLECTION_AUTH]
             new_user = {
-                '_id': email,
+                # '_id': email,
                 'name': name,
                 'email': email,
                 'password': hashed_password,
@@ -96,7 +115,6 @@ class signup(View):
             insert_status = mongo_col.insert_one(new_user)
             if insert_status.inserted_id:
                 request.session['email'] = email
-                print(request.session.items())
                 mongo_cat_col = MONGO_DB[MONGO_COLLECTION_CATEGORY]
                 insert_col_status = mongo_cat_col.insert_one({'_id': email, 'category': ['Recharge/Bill', 'Income', 'Food/Drinks', 'Transportation']})
                 return JsonResponse({'status': True, 'msg': 'Account created!'})
@@ -117,8 +135,9 @@ def get_user(request):
         if not email: return redirect('login')
 
         mongo_col = MONGO_DB[MONGO_COLLECTION_AUTH]
-        user_data = mongo_col.find_one({'_id': email})
+        user_data = mongo_col.find_one({'email': email}, {'password': 0})
         if user_data:
+            user_data['_id'] = str(user_data['_id'])
             return JsonResponse({'status': True, 'user_data': user_data})
         else:
             return JsonResponse({'status': False, 'msg': 'User not found!'})
@@ -135,7 +154,7 @@ def fp_get_email(request):
             fp_email = request_body['fp_email']
 
             mongo_col = MONGO_DB[MONGO_COLLECTION_AUTH]
-            result = mongo_col.find_one({'_id': fp_email})
+            result = mongo_col.find_one({'email': fp_email})
 
             if result:
                 otp = str(random.randint(100000, 999999))
@@ -221,7 +240,7 @@ def fp_password_submit(request):
                 mongo_col = MONGO_DB[MONGO_COLLECTION_AUTH]
                 auth_data = mongo_col.update_one(
                     {
-                        '_id': fp_email
+                        'email': fp_email
                     },
                     {
                         '$set': { 'password': hashed_fp_password }
@@ -306,7 +325,6 @@ def add_expense(request):
         amount = user_data.get('amount', 0)
         expenseType = user_data.get('expenseType', None)
 
-        print(description, category, date, amount, expenseType)
         if description and category and date and amount and expenseType:
             data = {
                 'description': description,
@@ -389,7 +407,6 @@ def update_expense(request):
 
             mongo_col = MONGO_DB[MONGO_COLLECTION_EXPENSE]
             result = mongo_col.update_one(filter_doc, {"$set": update_doc})
-            print(result.raw_result)
             if result.modified_count:
                 return JsonResponse({'status': True, 'msg': 'Expense updated!'})
             elif result.raw_result['nModified']==0:
@@ -407,7 +424,6 @@ def delete_expense(request):
         try:
             body = json.loads(request.body)
             expense_id = body['id']
-            print(expense_id)
 
             email = request.session.get('email', None)
             if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
@@ -430,7 +446,6 @@ def delete_category(request):
         try:
             body = json.loads(request.body)
             category = body['category']
-            print(category)
 
             email = request.session.get('email', None)
             if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
@@ -441,7 +456,6 @@ def delete_category(request):
                 {'_id': email}, 
                 {'$pull': {'category': category}}
             )
-            print(result.raw_result)
             if result.modified_count:
                 return JsonResponse({'status': True, 'msg': f'Category "{category}" deleted successfully!'})
             else:
@@ -520,6 +534,62 @@ def get_insights_data(request):
             return JsonResponse({'status': False, 'msg': str(e)}, status=500)
     
     return JsonResponse({'status': False, 'msg': 'Invalid request method'}, status=405)
+
+# Update profile
+@method_decorator(csrf_exempt, name='dispatch')
+class update_profile(View):
+    def post(self, request):
+        try:
+            username = request.POST.get('username')
+            email_ = request.POST.get('email')
+
+            profilePicFile = request.FILES.get('profilePic')
+            update_profile_pic = hasattr(profilePicFile, 'name')                
+
+            email = request.session.get('email', None)
+            if not email and settings.DEBUG: email = TEST_ACCOUNT_EMAIL
+            if not email: return redirect('login')
+
+            if email != email_:
+                return JsonResponse({'status': False, 'msg': 'Authentication error!'}, status=500)
+
+            mongo_db = connect_to_mongo()
+            mongo_col = mongo_db[MONGO_COLLECTION_AUTH]
+            profile_data = mongo_col.find_one({'email': email})
+
+            profilePicFileName = str(profile_data['_id']) + '_' + datetime.now().strftime("%Y%m%d_%H%M%S")
+
+            updated_profile = {
+                'name': username
+            }
+
+            if update_profile_pic:
+                aws_s3_instance = AWS_S3_API(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME)
+                old_profilePic_url = profile_data.get('profilePic', None)
+
+                if old_profilePic_url:
+                    obj_key = aws_s3_instance.get_object_key_from_url(old_profilePic_url)
+                    status_obj = aws_s3_instance.delete_file_from_s3(obj_key)
+
+                result_obj = aws_s3_instance.upload_image_to_s3(profilePicFile, 'profile_pics/', profilePicFileName)
+                if result_obj['success']:
+                    updated_profile['profilePic'] = result_obj['file_url']
+
+            update_result = mongo_col.update_one(
+                {'email': email},
+                {'$set': updated_profile}
+            )
+
+            return JsonResponse({
+                'status': True, 
+                'msg': 'Profile updated successfully!', 
+                'profilePicUrl': updated_profile['profilePic'] if update_profile_pic else None
+            })
+        
+        except Exception as e:
+            print(traceback.format_exc())
+            return JsonResponse({'status': False, 'msg': 'Error updating profile'}, status=500)
+
 
 # Logout
 @csrf_exempt

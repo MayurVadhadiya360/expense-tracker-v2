@@ -62,3 +62,16 @@ ul {
 	font-size: medium;
 	font-weight: 500;
 }
+
+.profile-img-circle {
+	width: 150px;
+	height: 150px;
+	border-radius: 50%;
+}
+
+.p-fileupload .p-button-label {
+	max-width: 20rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

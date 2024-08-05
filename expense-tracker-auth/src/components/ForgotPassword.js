@@ -75,7 +75,6 @@ function ForgotPassword(props) {
                     else {
                         setToastMsg({ severity: 'error', summary: 'Warning', detail: result.msg, life: 3000 });
                     }
-                    console.log(result);
                     setLoadingEmailBtn(false);
                     setLoadingBarProgress(100);
                 },
@@ -109,7 +108,6 @@ function ForgotPassword(props) {
                     else {
                         setToastMsg({ severity: 'error', summary: 'Warning', detail: result.msg, life: 3000 });
                     }
-                    console.log(result);
                     setLoadingOTPValueBtn(false);
                     setLoadingBarProgress(100);
                 },
@@ -154,7 +152,6 @@ function ForgotPassword(props) {
                         setToastMsg({ severity: 'error', summary: 'Warning', detail: result.msg, life: 3000 });
                         setLoadingBarProgress(100);
                     }
-                    console.log(result);
                     setLoadingPassword2Btn(false);
                 },
                 (error) => {

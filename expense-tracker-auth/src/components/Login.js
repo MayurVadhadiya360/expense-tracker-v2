@@ -41,7 +41,6 @@ function Login(props) {
             return false;
         }
         setLoadingBarProgress(30);
-        console.log("Login Call here");
         fetch(`${API_URL}/login/`, {
             method: "POST",
             headers: { "content-type": "application/json" },
@@ -60,7 +59,6 @@ function Login(props) {
                         }, 1500);
                     }
                     else {
-                        console.log(result.msg);
                         Swal.fire(
                             {
                                 title: 'Warning!',

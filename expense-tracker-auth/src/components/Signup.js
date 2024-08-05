@@ -63,7 +63,6 @@ function Signup(props) {
             return false;
         }
 
-        console.log("Signup Call here");
         setLoadingBarProgress(30);
         fetch(`${API_URL}/signup/`, {
             method: "POST",
@@ -84,7 +83,6 @@ function Signup(props) {
                         }, 1500);
                     }
                     else {
-                        console.log(result.msg);
                         Swal.fire(
                             {
                                 title: 'Warning!',

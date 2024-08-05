@@ -296,7 +296,6 @@ function ExpensePage(props) {
 
     return (
         <>
-            {console.log('- expense page')}
             <Tooltip target={'.expense-type'} />
             <div className='card m-2 p-1' >
                 <DataTable

@@ -1,15 +1,18 @@
 import React, { useState, useEffect, createContext, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import LoadingBar from 'react-top-loading-bar';
 import './App.css'
 import "primereact/resources/themes/lara-light-cyan/theme.css";
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from './components/Navbar';
+import Profile from './components/Profile';
 import Insights from './components/Insights';
 import HomePage from './components/HomePage';
 import AddExpense from './components/AddExpense';
 import AddCategory from './components/Category';
 import ExpensePage from './components/ExpensePage';
+import { config } from './components/utils/config';
 import { Toast } from 'primereact/toast';
 import { Dialog } from 'primereact/dialog';
 import { TabView, TabPanel } from 'primereact/tabview';
@@ -17,8 +20,8 @@ import { TabView, TabPanel } from 'primereact/tabview';
 export const GlobalDataContext = createContext();
 
 function App() {
-  const API_URL = window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL;
-  const INIT_PATH = window._env_.REACT_APP_INIT_PATH || process.env.REACT_APP_INIT_PATH;
+  const INIT_PATH = config.init_path;
+  const API_URL = config.api_url + config.init_path;
 
   const [expenseData, setExpenseData] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -26,6 +29,27 @@ function App() {
   const [toastMsg, setToastMsg] = useState(null);
   const [visibleDialogExpense, setVisibleDialogExpense] = useState(false);
   const [dialogActiveIndex, setDialogActiveIndex] = useState(1);
+  const [userData, setUserData] = useState({});
+  const [loadingBarProgress, setLoadingBarProgress] = useState(0);
+
+  const getUserData = () => {
+    fetch(`${API_URL}/get_user/`)
+      .then(res => res.json())
+      .then(
+        (result) => {
+          if (result.status) {
+            setUserData(result.user_data);
+          }
+          else {
+            setToastMsg({ severity: 'error', summary: 'Error', detail: 'Failed to get user!', life: 3000 });
+          }
+        },
+        (error) => {
+          console.error(error);
+          setToastMsg({ severity: 'error', summary: 'Error', detail: "Functional error!", life: 3000 });
+        }
+      );
+  }
 
   // Toast Messages
   const toast = useRef(null);
@@ -42,14 +66,13 @@ function App() {
       .then(res => res.json())
       .then(
         (result) => {
-          console.log(result);
           if (result['status']) {
             setExpenseData(result['expenses']);
           }
           setLoader(false);
         },
         (error) => {
-          console.log(error);
+          console.error(error);
           setLoader(false);
         }
       );
@@ -61,18 +84,18 @@ function App() {
       .then(res => res.json())
       .then(
         (result) => {
-          console.log(result);
           if (result['status']) {
             setCategories(result['category']);
           }
         },
         (error) => {
-          console.log(error);
+          console.error(error);
         }
       )
   }
 
   useEffect(() => {
+    getUserData();
     fetchCategoryData();
     fetchExpenseData();
     // eslint-disable-next-line
@@ -95,20 +118,19 @@ function App() {
     INIT_PATH,
     categories,
     setCategories,
-    fetchCategoryData,
     categorySeverity,
     expenseData,
     fetchExpenseData,
     setToastMsg,
-    setVisibleDialogExpense,
-    setDialogActiveIndex,
+    setLoadingBarProgress,
   };
 
   return (
     <>
       <GlobalDataContext.Provider value={contextValue}>
         <Router>
-          <Navbar />
+          <LoadingBar height={3} color='#f11946' progress={loadingBarProgress} />
+          <Navbar userData={userData} setDialogActiveIndex={setDialogActiveIndex} setVisibleDialogExpense={setVisibleDialogExpense} />
           <Toast ref={toast} />
           <Dialog
             header='Add Expense & Category'
@@ -135,11 +157,12 @@ function App() {
             </div>
           </Dialog>
           <Routes>
-            <Route exact path='/' element={<Navigate to={`${INIT_PATH}/home`}/>}></Route>
-            <Route exact path={INIT_PATH} element={<Navigate to={`${INIT_PATH}/home`}/>}></Route>
-            <Route exact path={`${INIT_PATH}/home`} element={<HomePage />}></Route>
-            <Route exact path={`${INIT_PATH}/expense`} element={<ExpensePage />}></Route>
-            <Route exact path={`${INIT_PATH}/insights`} element={<Insights />}></Route>
+            <Route exact path='/' element={<Navigate to={`${INIT_PATH}/home`} />} />
+            <Route exact path={INIT_PATH} element={<Navigate to={`${INIT_PATH}/home`} />} />
+            <Route exact path={`${INIT_PATH}/home`} element={<HomePage />} />
+            <Route exact path={`${INIT_PATH}/expense`} element={<ExpensePage />} />
+            <Route exact path={`${INIT_PATH}/insights`} element={<Insights />} />
+            <Route exact path={`${INIT_PATH}/profile`} element={<Profile userData={userData} getUserData={getUserData} />} />
           </Routes>
         </Router>
       </GlobalDataContext.Provider>

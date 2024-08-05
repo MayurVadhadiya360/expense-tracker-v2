@@ -5,7 +5,7 @@ import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 
 const CategoryList = ({ listHeight = '6rem', isDeletable = false }) => {
-    const { API_URL, categories, categorySeverity, setToastMsg, fetchCategoryData } = useContext(GlobalDataContext);
+    const { API_URL, categories, setCategories, categorySeverity, setToastMsg } = useContext(GlobalDataContext);
 
     const elementLoading = (elementId, isLoading) => {
         const ele = document.getElementById(elementId);
@@ -32,7 +32,9 @@ const CategoryList = ({ listHeight = '6rem', isDeletable = false }) => {
                     elementLoading(`category-${category}`, false);
                     if (result.status) {
                         setToastMsg({ severity: 'success', summary: 'Success', detail: result.msg, life: 3000 });
-                        fetchCategoryData();
+                        setCategories(prevCategories =>
+                            prevCategories.filter(cat => cat !== category)
+                        );
                     }
                     else {
                         setToastMsg({ severity: 'error', summary: 'Error', detail: result.msg, life: 3000 });
@@ -76,7 +78,6 @@ function AddCategory({ header = true, listHeight = '6rem', isDeletable = false }
 
     // loading state
     const [loadingCategory, setLoadingCategory] = useState(false);
-    const [spinClass, setSpinClass] = useState('');
 
     useEffect(() => {
         setValidNewCategory((newCategory === '' && newCategory === null) ? false : true);
@@ -86,7 +87,6 @@ function AddCategory({ header = true, listHeight = '6rem', isDeletable = false }
     const addNewCategory = () => {
         if (validNewCategory) {
             setLoadingCategory(true); // showing loader
-            setSpinClass('pi-spin'); // for spinning
 
             fetch(`${API_URL}/add_category/`, {
                 method: 'POST',
@@ -108,13 +108,11 @@ function AddCategory({ header = true, listHeight = '6rem', isDeletable = false }
                             setToastMsg({ severity: 'error', summary: 'Error', detail: result.msg, life: 3000 });
                         }
                         setLoadingCategory(false);
-                        setSpinClass('');
                     },
                     (error) => {
                         console.error(error);
                         setToastMsg({ severity: 'error', summary: 'Error', detail: "Functional error!", life: 3000 });
                         setLoadingCategory(false);
-                        setSpinClass('');
                     }
                 )
         }
@@ -123,8 +121,6 @@ function AddCategory({ header = true, listHeight = '6rem', isDeletable = false }
 
     return (
         <>
-            {console.log('- add category')}
-
             {
                 header &&
                 <>
@@ -145,9 +141,10 @@ function AddCategory({ header = true, listHeight = '6rem', isDeletable = false }
                         placeholder="Enter Category"
                         invalid={!validNewCategory}
                         variant="filled"
+                        disabled={loadingCategory}
                     />
                     <Button
-                        icon={`pi pi-check ${spinClass}`}
+                        icon={`pi pi-check`}
                         onClick={addNewCategory}
                         loading={loadingCategory}
                         className="p-button-success"
