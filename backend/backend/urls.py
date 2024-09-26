@@ -23,4 +23,4 @@ urlpatterns = [
     path('', include('expense_tracker_api.urls')),
 ]
 
-urlpatterns += staticfiles_urlpatterns()
+urlpatterns += staticfiles_urlpatterns(prefix="static/")
