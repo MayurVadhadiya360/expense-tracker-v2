@@ -1,6 +1,7 @@
 backend/backend/.env
 backend/backend/__pycache__/
 backend/expense_tracker_api/__pycache__/
+backend/staticfiles
 backend/db.sqlite3
 myenv/
 
