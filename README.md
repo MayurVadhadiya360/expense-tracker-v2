@@ -1,6 +1,14 @@
 # ExpenseTracker
 ExpenseTracker is a web application for tracking personal expenses and income. It allows users to categorize their transactions, view their spending patterns, and manage their financial activities efficiently. The application is built using Django for the backend and React for the frontend.
 
+## Try out Website
+website: https://expense-tracker-v2-4vtr.onrender.com
+
+username: Demo User  
+email: demo.user@mail.com  
+password: Demo@User@123
+
+
 ## Table of Contents
 - [Features](#features)
 - [Installation](#installation)
