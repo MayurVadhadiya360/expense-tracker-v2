@@ -206,7 +206,7 @@ function Signup(props) {
                                         </div>
                                         <div className="col-md-10 col-lg-6 col-xl-7 d-flex align-items-center order-1 order-lg-2">
 
-                                            <img src="https://expense-tracker-cdn.s3.ap-south-1.amazonaws.com/images/draw1.webp" className="img-fluid" alt="Sample" />
+                                            <img src="/static/img/draw1.webp" className="img-fluid" alt="Sample" />
 
                                         </div>
                                     </div>

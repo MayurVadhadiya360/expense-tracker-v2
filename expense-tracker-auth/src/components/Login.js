@@ -103,7 +103,7 @@ function Login(props) {
                                 <div className="card-body p-md-5">
                                     <div className="row justify-content-center">
                                         <div className="col-md-9 col-lg-6 col-xl-5">
-                                            <img src="https://expense-tracker-cdn.s3.ap-south-1.amazonaws.com/images/draw2.webp" className="img-fluid" alt="Sample" />
+                                            <img src="/static/img/draw2.webp" className="img-fluid" alt="Sample" />
                                         </div>
                                         <div className="col-md-8 col-lg-6 col-xl-4 offset-xl-1">
                                             <form >
