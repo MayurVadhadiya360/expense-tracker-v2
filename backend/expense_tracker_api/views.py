@@ -42,10 +42,11 @@ MONGO_COLLECTION_CATEGORY = settings.MONGO_COLLECTION_CATEGORY
 MONGO_COLLECTION_EXPENSE = settings.MONGO_COLLECTION_EXPENSE
 MONGO_COLLECTION_OTP = settings.MONGO_COLLECTION_OTP
 
-AWS_ACCESS_KEY_ID = settings.AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY = settings.AWS_SECRET_ACCESS_KEY
-AWS_STORAGE_BUCKET_NAME = settings.AWS_STORAGE_BUCKET_NAME
-AWS_S3_REGION_NAME = settings.AWS_S3_REGION_NAME
+# # Service Suspended
+# AWS_ACCESS_KEY_ID = settings.AWS_ACCESS_KEY_ID
+# AWS_SECRET_ACCESS_KEY = settings.AWS_SECRET_ACCESS_KEY
+# AWS_STORAGE_BUCKET_NAME = settings.AWS_STORAGE_BUCKET_NAME
+# AWS_S3_REGION_NAME = settings.AWS_S3_REGION_NAME
 
 if settings.DEBUG:
     TEST_ACCOUNT_EMAIL = 'test-account-mail@example.com'
@@ -564,16 +565,21 @@ class update_profile(View):
             }
 
             if update_profile_pic:
-                aws_s3_instance = AWS_S3_API(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME)
-                old_profilePic_url = profile_data.get('profilePic', None)
+                return JsonResponse({
+                    'status': False, 
+                    'msg': 'Profile picture update service is not available!', 
+                }, status=401)
+                # # Service Suspended
+                # aws_s3_instance = AWS_S3_API(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME)
+                # old_profilePic_url = profile_data.get('profilePic', None)
 
-                if old_profilePic_url:
-                    obj_key = aws_s3_instance.get_object_key_from_url(old_profilePic_url)
-                    status_obj = aws_s3_instance.delete_file_from_s3(obj_key)
+                # if old_profilePic_url:
+                #     obj_key = aws_s3_instance.get_object_key_from_url(old_profilePic_url)
+                #     status_obj = aws_s3_instance.delete_file_from_s3(obj_key)
 
-                result_obj = aws_s3_instance.upload_image_to_s3(profilePicFile, 'profile_pics/', profilePicFileName)
-                if result_obj['success']:
-                    updated_profile['profilePic'] = result_obj['file_url']
+                # result_obj = aws_s3_instance.upload_image_to_s3(profilePicFile, 'profile_pics/', profilePicFileName)
+                # if result_obj['success']:
+                #     updated_profile['profilePic'] = result_obj['file_url']
 
             update_result = mongo_col.update_one(
                 {'email': email},
